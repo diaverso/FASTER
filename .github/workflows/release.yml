@@ -16,6 +16,7 @@ on:
   workflow_dispatch: # ReleaseGen can be triggered manually
 
 env:
+  DOTNET_VERSION: '8.0.x'
   IS_RELEASE: ${{ github.ref_type == 'tag' }}
   ZIP_NAME: ${{ github.ref_type == 'tag' && 'Release_' || 'Release_Nightly_' }}
   ZIP_PATH: ${{ github.ref_type == 'tag' && 'FASTER_' || 'FASTER_Nightly_' }}

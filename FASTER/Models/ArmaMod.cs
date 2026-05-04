@@ -105,6 +105,7 @@ namespace FASTER.Models
         private long   _size;
         private bool   _isLoading;
         private bool   _isSelected;
+        private static bool _apiKeyWarningShown = false;
 
 
         public uint   WorkshopId
@@ -336,6 +337,13 @@ namespace FASTER.Models
                     Status = ArmaModStatus.UpToDate;
                 success = true;
             } while (failNum < 3 && !success);
+
+            if (!success && !_apiKeyWarningShown)
+            {
+                _apiKeyWarningShown = true;
+                MainWindow.Instance?.Dispatcher.Invoke(() =>
+                    MainWindow.Instance.DisplayMessage("Could not fetch mod info. Please check your Steam API Key in Settings."));
+            }
 
             if (checkFileSize)
                 CheckModSize();

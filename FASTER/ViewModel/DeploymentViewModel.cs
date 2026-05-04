@@ -108,12 +108,20 @@ namespace FASTER.ViewModel
                 {"Name", Settings.Default.steamUserName}
             });
 
+            if (!Directory.Exists(Deployment.InstallPath))
+            {
+                DisplayMessage("Arma Install Path is empty.\nMake sure you have entered a valid path before deploying mods.");
+                return;
+            }
+
             foreach (var mod in Deployment.DeployMods)
             {
                 var linkPath = Path.Combine(Deployment.InstallPath, $"@{Functions.SafeName(mod.Name)}");
                 mod.Marked = true;
                 LinkMod(mod, linkPath);
             }
+            Settings.Default.Deployments = Deployment;
+            Settings.Default.Save();
         }
 
         /// <summary>
@@ -207,10 +215,17 @@ namespace FASTER.ViewModel
             try
             {
                 if(Directory.Exists(linkPath))
-                    Directory.Delete(linkPath, true);
+                {
+                    if (new DirectoryInfo(linkPath).Attributes.HasFlag(FileAttributes.ReparsePoint))
+                        Directory.Delete(linkPath);
+                    else
+                        Directory.Delete(linkPath, true);
+                }
 
                 Directory.CreateSymbolicLink(linkPath ?? throw new ArgumentNullException(nameof(linkPath)), mod.Path);
             }
+            catch (UnauthorizedAccessException)
+            { DisplayMessage("Could not create symlink: Access denied.\n\nTo deploy mods, enable Windows Developer Mode in Settings → Update & Security → For Developers, or run FASTER as Administrator."); }
             catch (Exception ex)
             { DisplayMessage("An exception occurred: \n\n" + ex.Message); }
         }
@@ -224,7 +239,12 @@ namespace FASTER.ViewModel
             try
             {
                 if (Directory.Exists(linkPath))
-                    Directory.Delete(linkPath, true);
+                {
+                    if (new DirectoryInfo(linkPath).Attributes.HasFlag(FileAttributes.ReparsePoint))
+                        Directory.Delete(linkPath);
+                    else
+                        Directory.Delete(linkPath, true);
+                }
             }
             catch (Exception ex)
             { DisplayMessage("An exception occurred: \n\n" + ex.Message); }

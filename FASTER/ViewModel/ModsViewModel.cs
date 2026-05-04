@@ -230,10 +230,13 @@ namespace FASTER.ViewModel
 
             Process.Start(startInfo);
         }
-        public void CheckForUpdates()
+        public async Task CheckForUpdates()
         {
             foreach (ArmaMod mod in ModsCollection.ArmaMods)
-            { Task.Run(() => mod.UpdateInfos()); }
+            {
+                await Task.Run(() => mod.UpdateInfos());
+                await Task.Delay(300);
+            }
         }
 
         public async Task UpdateSelectedMods()
@@ -253,8 +256,75 @@ namespace FASTER.ViewModel
 
             MainWindow.Instance.NavigateToConsole();
             var ans = await MainWindow.Instance.SteamUpdaterViewModel.RunModsUpdater(ModsCollection.ArmaMods);
-            if(ans == UpdateState.LoginFailed) 
+            if(ans == UpdateState.LoginFailed)
                 DisplayMessage("Steam Login Failed");
+        }
+
+        public void PurgeAndReinstallMod(ArmaMod mod)
+        {
+            if (mod == null) return;
+
+            try
+            {
+                if (Directory.Exists(mod.Path))
+                    Directory.Delete(mod.Path, true);
+            }
+            catch
+            { DisplayMessage($"Could not delete folder for mod {mod.WorkshopId}"); }
+
+            mod.Status           = ArmaModStatus.UpdateRequired;
+            mod.LocalLastUpdated = 0;
+            mod.Size             = 0;
+            Properties.Settings.Default.Save();
+        }
+
+        public void PurgeAndReinstallSelectedMods()
+        {
+            var selectedMods = new List<ArmaMod>(ModsCollection.ArmaMods.Where(m => m.IsSelected && !m.IsLocal));
+            foreach (var mod in selectedMods)
+                PurgeAndReinstallMod(mod);
+        }
+
+        public async Task PurgeAndReinstallAll()
+        {
+            var answer = await DialogCoordinator.ShowInputAsync(this, "Are you sure you want to purge all mods?", "Write \"yes\" and press OK to delete all mod folders and mark them for re-download.");
+
+            if (string.IsNullOrEmpty(answer) || !answer.Equals("yes"))
+                return;
+
+            Analytics.TrackEvent("Mods - Clicked PurgeAndReinstallAll", new Dictionary<string, string>
+            {
+                {"Name", Properties.Settings.Default.steamUserName}
+            });
+
+            foreach (var mod in ModsCollection.ArmaMods.Where(m => !m.IsLocal).ToList())
+                PurgeAndReinstallMod(mod);
+        }
+
+        public async Task PurgeUnusedMods()
+        {
+            var usedIds = Properties.Settings.Default.Profiles
+                .SelectMany(p => p.ProfileMods ?? Enumerable.Empty<ProfileMod>())
+                .Select(m => m.Id)
+                .ToHashSet();
+
+            var unusedMods = ModsCollection.ArmaMods
+                .Where(m => !m.IsLocal && !usedIds.Contains(m.WorkshopId))
+                .ToList();
+
+            if (unusedMods.Count == 0)
+            {
+                DisplayMessage("No unused mods found.");
+                return;
+            }
+
+            var result = await DialogCoordinator.ShowInputAsync(this,
+                "Purge Unused Mods",
+                $"Found {unusedMods.Count} unused mod(s). Type \"yes\" to confirm deletion.");
+            if (result?.ToLower() != "yes") return;
+
+            foreach (var mod in unusedMods)
+                DeleteMod(mod);
         }
     }
 }

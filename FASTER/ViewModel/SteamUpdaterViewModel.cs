@@ -434,14 +434,13 @@ namespace FASTER.ViewModel
             {
                 await maxThread.WaitAsync();
 
-                _ = Task.Factory.StartNew(() =>
+                _ = Task.Factory.StartNew(async () =>
                 {
                     if (!Directory.Exists(mod.Path))
                         Directory.CreateDirectory(mod.Path);
 
                     if (tokenSource.Token.IsCancellationRequested)
                     {
-                        mod.Status = ArmaModStatus.NotComplete;
                         return;
                     }
                     Parameters.Output += $"\n   Starting {mod.WorkshopId}";
@@ -450,7 +449,7 @@ namespace FASTER.ViewModel
                     try
                     {
                         ManifestId manifestId = default;
-                        
+
                         if(mod.LocalLastUpdated > mod.SteamLastUpdated && mod.Size > 0)
                         {
                             mod.Status = ArmaModStatus.UpToDate;
@@ -461,16 +460,16 @@ namespace FASTER.ViewModel
                         if (!SteamClient.Credentials.IsAnonymous) //IS SYNC NEABLED
                         {
                             Parameters.Output += $"\n   Getting manifest for {mod.WorkshopId}";
-                            manifestId = SteamContentClient.GetPublishedFileDetailsAsync(mod.WorkshopId).Result.hcontent_file;
-                            Manifest manifest = SteamContentClient.GetManifestAsync(107410, 107410, manifestId).Result;
+                            manifestId = (await SteamContentClient.GetPublishedFileDetailsAsync(mod.WorkshopId)).hcontent_file;
+                            Manifest manifest = await SteamContentClient.GetManifestAsync(107410, 107410, manifestId);
                             Parameters.Output += $"\n   Manifest retrieved {mod.WorkshopId}";
                             SyncDeleteRemovedFiles(mod.Path, manifest);
                         }
 
                         Parameters.Output += $"\n    Attempting to start download of item {mod.WorkshopId}... ";
 
-                        var downloadHandler = SteamContentClient.GetPublishedFileDataAsync(mod.WorkshopId, manifestId, tokenSource.Token);
-                        DownloadForMultiple(downloadHandler.Result, mod.Path).Wait();
+                        var downloadHandler = await SteamContentClient.GetPublishedFileDataAsync(mod.WorkshopId, manifestId, tokenSource.Token);
+                        await DownloadForMultiple(downloadHandler, mod.Path);
 
                         mod.Status = ArmaModStatus.UpToDate;
                         var nx = DateTime.UnixEpoch;
@@ -494,7 +493,7 @@ namespace FASTER.ViewModel
 
                     Parameters.Output += $"\n    Download {mod.WorkshopId} completed, it took {sw.Elapsed.Minutes + sw.Elapsed.Hours*60}m {sw.Elapsed.Seconds}s {sw.Elapsed.Milliseconds}ms";
 
-                }, TaskCreationOptions.LongRunning).ContinueWith((_) =>
+                }, TaskCreationOptions.LongRunning).Unwrap().ContinueWith((_) =>
                 {
                     finished += 1;
                     Parameters.Output += $"\n   Thread {mod.WorkshopId} complete  ({finished} / {ml.Count})";
@@ -504,11 +503,16 @@ namespace FASTER.ViewModel
             }
 
             Parameters.Output += "\nAlmost there...";
-            await maxThread.WaitAsync();
-
+            try
+            {
+                await maxThread.WaitAsync();
+            }
+            finally
+            {
+                IsDlOverride = false;
+            }
 
             Parameters.Output += "\nMods updated !";
-            IsDlOverride = false;
             return UpdateState.Success;
         }
 
@@ -546,6 +550,7 @@ namespace FASTER.ViewModel
                 catch (Exception ex)
                 {
                     Parameters.Output += $"\nFailed! Error: {ex.Message}";
+                    var savedUsername = SteamClient?.Credentials.Username;
                     SteamClient.Shutdown();
                     SteamClient.Dispose();
                     SteamClient = null;
@@ -553,7 +558,7 @@ namespace FASTER.ViewModel
                     if (ex.GetBaseException() is SteamAuthenticationException)
                     {
                         Parameters.Output += "\nWarning: The logon may have failed due to expired sentry-data."
-                                             + $"\nIf you are sure that the provided username and password are correct, consider deleting the token file for the user \"{SteamClient?.Credentials.Username}\" in the sentries directory."
+                                             + $"\nIf you are sure that the provided username and password are correct, consider deleting the token file for the user \"{savedUsername}\" in the sentries directory."
                                              + $"{path}";
                     }
                     IsLoggingIn = false;
