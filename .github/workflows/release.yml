@@ -223,12 +223,14 @@ jobs:
         asset_name: ${{ env.ZIP_NAME}}x64.zip
         asset_content_type: application/zip
     
-    # Delete existing nightly tag so it can be recreated
-    - name: Delete existing nightly tag
+    # Delete existing nightly release and tag so it can be recreated cleanly
+    - name: Delete existing nightly release and tag
       if: env.IS_RELEASE == 'false'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        gh release delete nightly --yes --repo ${{ github.repository }} || true
         git push origin :refs/tags/nightly || true
-        git tag -d nightly || true
       shell: bash
 
     # Create Nightly Release
