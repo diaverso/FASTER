@@ -108,8 +108,11 @@ namespace FASTER.ViewModel
                 {"Name", Settings.Default.steamUserName}
             });
 
+            Logger.Log($"DeployAll: installPath={Deployment.InstallPath}, mods={Deployment.DeployMods.Count}");
+
             if (!Directory.Exists(Deployment.InstallPath))
             {
+                Logger.Log("DeployAll: install path not found, aborting.");
                 DisplayMessage("Arma Install Path is empty.\nMake sure you have entered a valid path before deploying mods.");
                 return;
             }
@@ -118,10 +121,12 @@ namespace FASTER.ViewModel
             {
                 var linkPath = Path.Combine(Deployment.InstallPath, $"@{Functions.SafeName(mod.Name)}");
                 mod.Marked = true;
+                Logger.Log($"  Linking {mod.Name}: {mod.Path} -> {linkPath}");
                 LinkMod(mod, linkPath);
             }
             Settings.Default.Deployments = Deployment;
             Settings.Default.Save();
+            Logger.Log("DeployAll: done.");
         }
 
         /// <summary>
@@ -212,22 +217,36 @@ namespace FASTER.ViewModel
         /// <param name="linkPath"></param>
         private void LinkMod(DeploymentMod mod, string linkPath)
         {
+            Logger.Log($"LinkMod: {mod.Name} ({mod.WorkshopId}) -> {linkPath}");
             try
             {
                 if(Directory.Exists(linkPath))
                 {
                     if (new DirectoryInfo(linkPath).Attributes.HasFlag(FileAttributes.ReparsePoint))
+                    {
+                        Logger.Log($"  Removing existing symlink: {linkPath}");
                         Directory.Delete(linkPath);
+                    }
                     else
+                    {
+                        Logger.Log($"  Removing existing real dir: {linkPath}");
                         Directory.Delete(linkPath, true);
+                    }
                 }
 
                 Directory.CreateSymbolicLink(linkPath ?? throw new ArgumentNullException(nameof(linkPath)), mod.Path);
+                Logger.Log($"  Symlink created OK.");
             }
             catch (UnauthorizedAccessException)
-            { DisplayMessage("Could not create symlink: Access denied.\n\nTo deploy mods, enable Windows Developer Mode in Settings → Update & Security → For Developers, or run FASTER as Administrator."); }
+            {
+                Logger.Log($"  ERROR: UnauthorizedAccessException creating symlink.");
+                DisplayMessage("Could not create symlink: Access denied.\n\nTo deploy mods, enable Windows Developer Mode in Settings → Update & Security → For Developers, or run FASTER as Administrator.");
+            }
             catch (Exception ex)
-            { DisplayMessage("An exception occurred: \n\n" + ex.Message); }
+            {
+                Logger.Log($"  ERROR: {ex.Message}");
+                DisplayMessage("An exception occurred: \n\n" + ex.Message);
+            }
         }
 
         /// <summary>
