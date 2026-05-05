@@ -560,7 +560,7 @@ namespace FASTER.Models
             set
             {
                 drawingInMap = value;
-                RaisePropertyChanged(nameof(DrawinginMap));
+                RaisePropertyChanged(nameof(DrawingInMap));
             }
         }
 
