@@ -89,6 +89,8 @@ jobs:
   release:
     needs: build
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
 
     - name: Checkout
@@ -158,10 +160,16 @@ jobs:
           $changes = $changes -replace "^(.*)$", "$linePrefix`$1"
         }
 
+        # Truncate changelog to avoid exceeding env var limits (max ~32k)
+        $changesStr = $changes -join "`n"
+        if ($changesStr.Length -gt 20000) {
+          $changesStr = $changesStr.Substring(0, 20000) + "`n...(truncated)"
+        }
+
         # Set outputs
         $EOF = (New-Guid).Guid
         "changes<<$EOF" >> $env:GITHUB_OUTPUT
-        $changes >> $env:GITHUB_OUTPUT
+        $changesStr >> $env:GITHUB_OUTPUT
         "$EOF" >> $env:GITHUB_OUTPUT
         "tag=$latestTag" >> $env:GITHUB_OUTPUT
 
