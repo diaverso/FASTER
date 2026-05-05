@@ -239,7 +239,8 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: nightly
-        name: 'Nightly Release v${{ env.VERSION }}'
+        name: 'FASTER Nightly v${{ env.VERSION }}'
+        draft: false
         body: |
           Changelog since release ${{ steps.get-changes.outputs.tag }} :
           ---
