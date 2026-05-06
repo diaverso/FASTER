@@ -761,7 +761,7 @@ namespace FASTER.ViewModel
             downloadHandler.FileDownloaded        += (_, args) =>
             {
                 downloadedSize    += args.TotalSize;
-                Logger.Log($"  File downloaded: {args.ManifestFile?.FileName}, progress {downloadHandler.TotalProgress * 100:00.00}% ({Functions.ParseFileSize(downloadedSize)}/{Functions.ParseFileSize(downloadHandler.TotalFileSize)})");
+                Logger.Log($"  File downloaded: progress {downloadHandler.TotalProgress * 100:00.00}% ({Functions.ParseFileSize(downloadedSize)}/{Functions.ParseFileSize(downloadHandler.TotalFileSize)})");
                 Parameters.Output += $"\n    Progress {downloadHandler.TotalProgress * 100:00.00}% ({Functions.ParseFileSize(downloadedSize)} / {Functions.ParseFileSize(downloadHandler.TotalFileSize)})";
             };
             downloadHandler.DownloadComplete      += (_, _) =>
