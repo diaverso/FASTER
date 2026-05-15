@@ -9,6 +9,7 @@ namespace FASTER.Models
     {
         public static string[] PerfPresets { get; } = {"Custom", "Arma3 Defaults", "1Mb Preset", "250Mb Preset", "1Gb Preset"};
         public static double[] TerrainGrids { get; } = { 50, 25, 12.5, 6.25, 3.125 };
+        public static string[] Languages { get; } = { "English", "Czech", "French", "German", "Italian", "Polish", "Portuguese", "Russian", "Spanish", "Turkish", "Hungarian" };
     }
 
     [Serializable]
@@ -27,7 +28,18 @@ namespace FASTER.Models
         private ushort maxCustomFileSize    = 1024;
         private ushort maxPacketSize        = 1400;
 
+        private string _language = "English";
         private string basicContent;
+
+        public string Language
+        {
+            get => _language;
+            set
+            {
+                _language = value;
+                RaisePropertyChanged(nameof(Language));
+            }
+        }
 
         public string BasicContent
         {
@@ -35,7 +47,7 @@ namespace FASTER.Models
             set
             {
                 basicContent = value;
-                RaisePropertyChanged("BasicContent");
+                RaisePropertyChanged(nameof(BasicContent));
             }
         }
 
@@ -45,7 +57,7 @@ namespace FASTER.Models
             set
             {
                 viewDistance = value;
-                RaisePropertyChanged("ViewDistance");
+                RaisePropertyChanged(nameof(ViewDistance));
             }
         }
 
@@ -55,7 +67,7 @@ namespace FASTER.Models
             set
             {
                 terrainGrid = value;
-                RaisePropertyChanged("TerrainGrid");
+                RaisePropertyChanged(nameof(TerrainGrid));
             }
         }
 
@@ -65,7 +77,7 @@ namespace FASTER.Models
             set
             {
                 maxSizeGuaranteed = value;
-                RaisePropertyChanged("MaxSizeGuaranteed");
+                RaisePropertyChanged(nameof(MaxSizeGuaranteed));
             }
         }
 
@@ -75,7 +87,7 @@ namespace FASTER.Models
             set
             {
                 maxSizeNonguaranteed = value;
-                RaisePropertyChanged("MaxSizeNonGuaranteed");
+                RaisePropertyChanged(nameof(MaxSizeNonGuaranteed));
             }
         }
 
@@ -85,7 +97,7 @@ namespace FASTER.Models
             set
             {
                 maxMsgSend = value;
-                RaisePropertyChanged("MaxMsgSend");
+                RaisePropertyChanged(nameof(MaxMsgSend));
             }
         }
 
@@ -95,7 +107,7 @@ namespace FASTER.Models
             set
             {
                 minBandwidth = value;
-                RaisePropertyChanged("MinBandwidth");
+                RaisePropertyChanged(nameof(MinBandwidth));
             }
         }
 
@@ -105,7 +117,7 @@ namespace FASTER.Models
             set
             {
                 maxBandwidth = value;
-                RaisePropertyChanged("MaxBandwidth");
+                RaisePropertyChanged(nameof(MaxBandwidth));
             }
         }
 
@@ -115,7 +127,7 @@ namespace FASTER.Models
             set
             {
                 maxPacketSize = value;
-                RaisePropertyChanged("MaxPacketSize");
+                RaisePropertyChanged(nameof(MaxPacketSize));
             }
         }
 
@@ -125,7 +137,7 @@ namespace FASTER.Models
             set
             {
                 minErrorToSend = value;
-                RaisePropertyChanged("MinErrorToSend");
+                RaisePropertyChanged(nameof(MinErrorToSend));
             }
         }
 
@@ -135,7 +147,7 @@ namespace FASTER.Models
             set
             {
                 minErrorToSendNear = value;
-                RaisePropertyChanged("MinErrorToSendNear");
+                RaisePropertyChanged(nameof(MinErrorToSendNear));
             }
         }
 
@@ -145,11 +157,12 @@ namespace FASTER.Models
             set
             {
                 maxCustomFileSize = value;
-                RaisePropertyChanged("MaxCustomFileSize");
+                RaisePropertyChanged(nameof(MaxCustomFileSize));
             }
         }
 
         [XmlIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public string PerfPreset
         {
             get => "Custom";
@@ -181,7 +194,7 @@ namespace FASTER.Models
                         MinBandwidth         = 1000000000;
                         break;
                 }
-                RaisePropertyChanged("PerfPreset");
+                RaisePropertyChanged(nameof(PerfPreset));
             }
         }
 
@@ -191,7 +204,7 @@ namespace FASTER.Models
         public string ProcessFile()
         {
             string output = "// These options are created by default\r\n"
-                          + "language=\"English\";\r\n"
+                          + $"language=\"{_language}\";\r\n"
                           + "adapter=-1;\r\n"
                           + "3D_Performance=1.000000;\r\n"
                           + "Resolution_W=800;\r\n"
