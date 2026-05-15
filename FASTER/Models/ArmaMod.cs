@@ -107,6 +107,13 @@ namespace FASTER.Models
         private bool   _isSelected;
         private static bool _apiKeyWarningShown = false;
 
+        private static bool TryShowApiKeyWarning()
+        {
+            if (_apiKeyWarningShown) return false;
+            _apiKeyWarningShown = true;
+            return true;
+        }
+
 
         public uint   WorkshopId
         {
@@ -338,9 +345,8 @@ namespace FASTER.Models
                 success = true;
             } while (failNum < 3 && !success);
 
-            if (!success && !_apiKeyWarningShown)
+            if (!success && TryShowApiKeyWarning())
             {
-                _apiKeyWarningShown = true;
                 MainWindow.Instance?.Dispatcher.Invoke(() =>
                     MainWindow.Instance.DisplayMessage("Could not fetch mod info. Please check your Steam API Key in Settings."));
             }
