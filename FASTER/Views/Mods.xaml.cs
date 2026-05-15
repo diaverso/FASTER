@@ -74,7 +74,7 @@ namespace FASTER.Views
 
         private async void CheckForUpdates_Click(object sender, RoutedEventArgs e)
         {
-            await ((ModsViewModel) DataContext)?.CheckForUpdates();
+            if (DataContext is ModsViewModel vm) await vm.CheckForUpdates();
         }
 
         private void UpdateAll_Click(object sender, RoutedEventArgs e)
@@ -89,7 +89,7 @@ namespace FASTER.Views
 
         private async void PurgeAndReinstallAll_Click(object sender, RoutedEventArgs e)
         {
-            await ((ModsViewModel) DataContext)?.PurgeAndReinstallAll();
+            if (DataContext is ModsViewModel vm) await vm.PurgeAndReinstallAll();
         }
 
         private void PurgeAndReinstallSelected_Click(object sender, RoutedEventArgs e)
@@ -99,7 +99,7 @@ namespace FASTER.Views
 
         private async void PurgeUnusedMods_Click(object sender, RoutedEventArgs e)
         {
-            await ((ModsViewModel) DataContext)?.PurgeUnusedMods();
+            if (DataContext is ModsViewModel vm) await vm.PurgeUnusedMods();
         }
     }
 }
