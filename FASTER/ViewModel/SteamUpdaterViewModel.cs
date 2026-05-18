@@ -479,15 +479,6 @@ namespace FASTER.ViewModel
         {
             Logger.Log($"  Task started: {mod.WorkshopId} ({mod.Name}), path={mod.Path}");
 
-            var crashBlacklist = Logger.LoadCrashBlacklist();
-            if (crashBlacklist.Contains(mod.WorkshopId))
-            {
-                Logger.Log($"  SKIPPED: {mod.WorkshopId} ({mod.Name}) is in crash blacklist. Delete %AppData%\\FASTER\\crash_blacklist.txt to retry.");
-                Parameters.Output += $"\n   Skipping {mod.WorkshopId} ({mod.Name}) — previously caused a crash. Update manually via Steam.";
-                mod.Status = ArmaModStatus.NotComplete;
-                return;
-            }
-
             try
             {
                 if (!Directory.Exists(mod.Path))
@@ -532,9 +523,7 @@ namespace FASTER.ViewModel
 
                     var downloadHandler = await SteamContentClient.GetPublishedFileDataAsync(mod.WorkshopId, manifestId, tokenSource.Token);
                     Logger.Log($"  Download handler obtained for {mod.WorkshopId}, starting download...");
-                    Logger.SetDownloadCheckpoint(mod.WorkshopId, mod.Name);
                     await DownloadForMultiple(downloadHandler, mod.Path);
-                    Logger.ClearDownloadCheckpoint();
                     Logger.Log($"  Download complete for {mod.WorkshopId}");
 
                     mod.Status = ArmaModStatus.UpToDate;

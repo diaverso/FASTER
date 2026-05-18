@@ -22,8 +22,6 @@ namespace FASTER
         {
             base.OnStartup(e);
 
-            Logger.ProcessCrashCheckpoint();
-
             AppDomain.CurrentDomain.UnhandledException += (_, args) =>
                 Logger.Log($"[FATAL] Unhandled exception (CLR): {args.ExceptionObject}");
 
