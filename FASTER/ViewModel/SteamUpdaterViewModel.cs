@@ -796,11 +796,12 @@ namespace FASTER.ViewModel
 
             Parameters.Output += $"\n    Downloading {downloadHandler.TotalFileCount} files with total size of {Functions.ParseFileSize(downloadHandler.TotalFileSize)}...";
             Parameters.Progress = 0;
+            using var downloadCts = CancellationTokenSource.CreateLinkedTokenSource(tokenSource.Token);
             var downloadStart = DateTime.UtcNow;
             int logTick = 0;
-            while (!downloadTask.IsCompleted && !downloadTask.IsCanceled && !tokenSource.IsCancellationRequested)
+            while (!downloadTask.IsCompleted && !downloadTask.IsCanceled && !downloadCts.Token.IsCancellationRequested)
             {
-                var delayTask = Task.Delay(500, tokenSource.Token);
+                var delayTask = Task.Delay(500, downloadCts.Token);
                 await Task.WhenAny(delayTask, downloadTask);
 
                 if (tokenSource.IsCancellationRequested)
@@ -815,9 +816,9 @@ namespace FASTER.ViewModel
 
                 if (DateTime.UtcNow - downloadStart > TimeSpan.FromMinutes(15))
                 {
-                    Logger.Log($"  DownloadAsync TIMEOUT after 15 minutes, cancelling.");
+                    Logger.Log($"  DownloadAsync TIMEOUT after 15 minutes, skipping this mod.");
                     Parameters.Output += "\n    Download timeout (15 min), skipping mod.";
-                    tokenSource.Cancel();
+                    downloadCts.Cancel();
                     break;
                 }
             }
