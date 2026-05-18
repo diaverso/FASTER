@@ -796,6 +796,8 @@ namespace FASTER.ViewModel
 
             Parameters.Output += $"\n    Downloading {downloadHandler.TotalFileCount} files with total size of {Functions.ParseFileSize(downloadHandler.TotalFileSize)}...";
             Parameters.Progress = 0;
+            var downloadStart = DateTime.UtcNow;
+            int logTick = 0;
             while (!downloadTask.IsCompleted && !downloadTask.IsCanceled && !tokenSource.IsCancellationRequested)
             {
                 var delayTask = Task.Delay(500, tokenSource.Token);
@@ -803,6 +805,21 @@ namespace FASTER.ViewModel
 
                 if (tokenSource.IsCancellationRequested)
                     Parameters.Output += "\n    Task cancellation requested";
+
+                logTick++;
+                if (logTick % 20 == 0) // every 10 seconds
+                {
+                    var elapsed = DateTime.UtcNow - downloadStart;
+                    Logger.Log($"  DownloadAsync still running after {elapsed.TotalSeconds:0}s, progress={downloadHandler.TotalProgress * 100:00.00}%");
+                }
+
+                if (DateTime.UtcNow - downloadStart > TimeSpan.FromMinutes(15))
+                {
+                    Logger.Log($"  DownloadAsync TIMEOUT after 15 minutes, cancelling.");
+                    Parameters.Output += "\n    Download timeout (15 min), skipping mod.";
+                    tokenSource.Cancel();
+                    break;
+                }
             }
 
             if (downloadTask.IsCanceled)
