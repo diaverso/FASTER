@@ -523,6 +523,7 @@ namespace FASTER.ViewModel
 
                     var downloadHandler = await SteamContentClient.GetPublishedFileDataAsync(mod.WorkshopId, manifestId, tokenSource.Token);
                     Logger.Log($"  Download handler obtained for {mod.WorkshopId}, starting download...");
+                    Models.SteamDiagLogger.Attach(downloadHandler);
                     await DownloadForMultiple(downloadHandler, mod.Path);
                     Logger.Log($"  Download complete for {mod.WorkshopId}");
 
