@@ -533,7 +533,7 @@ namespace FASTER.ViewModel
                 {
                     Logger.Log($"  {mod.WorkshopId} task cancelled.");
                     sw.Stop();
-                    mod.Status = ArmaModStatus.NotComplete;
+                    // Don't set NotComplete on user-cancel; CheckModSize below restores the correct status
                 }
                 catch (Exception ex)
                 {
